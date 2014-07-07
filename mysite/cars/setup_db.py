@@ -1,27 +1,27 @@
 from cars.models import *
 
-def _create(model, props):
-    for each in props:
-        name = each[0]
-        if not model(name=name):
-            model(name=name, **each[1] or dict()).save()
+import utils
+dbmodels = utils.db_models()
 
-_create(Owner, [
-    ('Steven Hines', None),
-    ('Carlos Galindo', None),
-    ('Vanessa Mar', None),
-])
+def setup():
+    if Engine.objects.first():
+        return 'Canceled, already setup.'
 
-_create(Engine, [
-    ('Electric', None),
-    ('Gas', None),
-    ('Diesel', None),
-    ('Hybrid', None),
-])
+    def _new(model, **kwargs):
+        return model.objects.create(**kwargs)
 
-_create(Make, [
-    ('Electric', None),
-    ('Gas', None),
-    ('Diesel', None),
-    ('Hybrid', None),
-])
+    for name in [ 'Steven Hines', 'Carlos Galindo', 'Vanessa Mar' ]:
+        _new(Owner, name=name)
+
+    engines = dict([ (name, _new(Engine, name=name))
+        for name in [ 'Diesel', 'Electric', 'Gas', 'Hybrid' ] ])
+    print 'setup > engines', engines
+
+    for name in [ 'Oil change', 'Tire rotation' ]:
+        _new(Task, name=name)
+
+    make = _new(Make, name='Dodge')
+    for name in [ 'Dart', 'Avenger', 'Charger', 'Challenger' ]:
+        _new(Model, name=name, make=make, engine=engines['Diesel'])
+
+    return 'Done'
