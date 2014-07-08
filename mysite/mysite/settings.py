@@ -56,13 +56,15 @@ USE_L10N = True
 USE_TZ = False
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+statics = os.path.join(BASE_DIR, 'static')
+# STATIC_ROOT = statics # useful for collectstatic.
 
 TEMPLATE_DIRS = (
     os.path.join(BASE_DIR, 'templates'),
 )
 
 STATICFILES_DIRS = (
+    statics,
 )
 
 REST_FRAMEWORK = {

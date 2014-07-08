@@ -1,11 +1,21 @@
 {% extends "cars/base.html" %}
 
 {% block goto %}
-  Schedule &nbsp; &nbsp; <a class="btn btn-default btn-sm" href="/cars">Menu</a>
+  Schedule &nbsp; &nbsp; <a class="btn btn-default btn-sm" href="/cars">Back to Menu</a>
 {% endblock %}
 
 {% block content %}
 
+  <ul>
+    <li> Search & select a Car instance @ Table, and edit or create Services. </li>
+    <li> Alternatively, select a Service Event @  Calendar to edit, or empty space to create; events can be dragged & resized. </li>
+    <li> In either case, a modal window will open to create or edit Services. </li>
+  </ul>
+  <hr>
   <table class="table table-striped" id="dt"></table>
+  <hr>
+  <div id="cal"></div>
+  <hr>
+  <p class="pull-right"> Footer @ Cars DEMO. </p>
 
 {% endblock %}

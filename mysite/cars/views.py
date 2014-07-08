@@ -40,7 +40,7 @@ class ServiceTaskViewSet(viewsets.ModelViewSet):
     serializer_class = ServiceTaskSerializer
 
 def index(request):
-    return render(request, 'cars/index.html', dict(data={}))
+    return render(request, 'cars/index.html', dict(schedule=False))
 
 def setup(request):
     import setup_db
@@ -51,24 +51,48 @@ def schedule(request):
     def _all(dbmodel):
         return dbmodel.objects.all()
 
+    def _datetime(datetime):
+        return str(datetime) if datetime else ''
+
     def _dict(data, fn):
         return dict([ (each.id, dict(id=each.id, **fn(each)))
             for each in data ])
 
-    def _models(make):
-        return _dict(make.model_set.all(), lambda model: dict(name=model.name))
-
     data = dict(
-        makes = _dict(_all(Make), lambda make: dict(name=make.name, models=_models(make))),
+        makes = _dict(_all(Make), lambda make: dict(
+            name = make.name,
+            models = _dict(make.model_set.all(), lambda model: dict(
+                name = model.name,
+            )),
+        )),
         cars = _dict(_all(Car), lambda car: dict(
-            owner = car.owner.name,
-            make = car.model.make.name,
-            model = car.model.name,
-            engine = car.model.engine.name,
+            owner = car.owner.id,
+            owner_name = car.owner.name,
+            make = car.model.make.id,
+            make_name = car.model.make.name,
+            model = car.model.id,
+            model_name = car.model.name,
+            engine = car.model.engine.id,
+            engine_name = car.model.engine.name,
             year = car.year,
             plate = car.plate,
+            services = [ each.id for each in car.service_set.all() ],
+        )),
+        services = _dict(_all(Service), lambda service: dict(
+            car = service.car.id,
+            car_name = str(service.car),
+            odometer = service.odometer,
+            sched = _datetime(service.sched),
+            enter = _datetime(service.enter),
+            exit = _datetime(service.exit),
+            total = str(service.total),
+            observations = service.observations,
+            servicetasks = _dict(service.servicetask_set.all(), lambda servicetask: dict(
+                task = servicetask.task.id,
+                task_name = servicetask.task.name,
+            )),
         )),
     )
 
-    print 'data', data
-    return render(request, 'cars/schedule.html', dict(data=json.dumps(data)))
+    # print 'data', data
+    return render(request, 'cars/schedule.html', dict(schedule=True, data=json.dumps(data)))

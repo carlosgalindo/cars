@@ -4,7 +4,12 @@
 {% block title %}{{ title }} | {% trans 'Cars DEMO site admin' %}{% endblock %}
 
 {% block branding %}
-<h1 id="site-name">{% trans 'Cars DEMO' %} &nbsp; | &nbsp; <a href="/cars">Menu</a> </h1>
+<h1 id="site-name">{% trans 'Cars DEMO' %}</h1>
 {% endblock %}
 
 {% block nav-global %}{% endblock %}
+
+{% block userlinks %}
+    <a style="font-size:larger;" href="/cars">Menu</a>
+    | <a href="{% url 'admin:logout' %}">{% trans 'Logout' %}</a>
+{% endblock %}

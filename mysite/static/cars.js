@@ -6,11 +6,8 @@ $(function(){
   _.mixin(_.str.exports()) /* underscore + string. */
 
   /* note that w_* properties & variables point to jquery widgets/elements. */
-  var w_city = $('#city')
-  var w_go = $('#go')
   var w_dt = $('#dt')
-
-  w_go.removeAttr('disabled') // fix for FF ... https://github.com/twbs/bootstrap/issues/793
+  var w_cal = $('#cal')
 
   $(document).on('click', '.act', function(){
 	var w_act = $(this)
@@ -19,12 +16,66 @@ $(function(){
 	_log('click', w_act, car_id, car)
   })
 
-  $('#clear').click(function(){
-	if (!confirm('Are you sure to clear all data?')) { return }
-	_log('clear')
-	api.clear().draw()
-	w_city.val('')
+  _log('data', data)
+  var data_cars = _(data.cars).values()
+
+  _(data_cars).each(function(each){
+	_(each).extend({
+	  act: _('<button class="btn btn-primary btn-sm act" data-car="%s">Select</button>').sprintf(each.id)
+	})
   })
+
+  w_dt.dataTable({
+    // paging: false,
+    // filter: false,
+    // info: false,
+    columns: [
+	  { title: 'Owner', data: 'owner_name' },
+	  { title: 'Make', data: 'make_name' },
+	  { title: 'Model', data: 'model_name' },
+	  { title: 'Engine', data: 'engine_name' },
+	  { title: 'Year', data: 'year' },
+	  { title: 'Plate', data: 'plate' },
+	  { title: 'Select', data: 'act', sortable: false },
+	],
+	data: data_cars
+  })
+  var api = w_dt.api()
+
+  // var events = [ { allDay: true, start: '2014-07-09', end: '2014-07-10', title: 'My EVENT' } ]
+  var events = _(_(data.services).values()).collect(function(each){
+	return { allDay: false, start: each.start || each.sched, end: each.end, title: each.car_name }
+  })
+
+  w_cal.fullCalendar({
+	header: {
+		left: 'prev,next today', // prevYear,X,nextYear
+		center: 'title',
+		right: 'month,agendaWeek,agendaDay' // ,basicWeek,basicDay
+	},
+	selectable: true,
+	selectHelper: true,
+	select: function(start, end, allDay, ev, view) {
+	  _log('cal.select')
+	},
+	dayClick: null, // otherwise it will trigger "select" again.
+	editable: true, // draggable & resizable events.
+	eventDrop: function(calev, dayDelta, minuteDelta, allDay, revertFunc, ev, ui, view) { // http://arshaw.com/fullcalendar/docs/event_ui/eventDrop/
+		_log('cal.eventDrop')
+	},
+	eventResize: function(calev, dayDelta, minuteDelta, revertFunc, ev, ui, view) { // http://arshaw.com/fullcalendar/docs/event_ui/eventResize/
+		_log('cal.eventResize')
+	},
+	eventClick: function(calev, ev, view) {
+	  _log('cal.eventClick')
+	},
+	events: events
+  })
+
+
+
+
+
 
   function go(city, w_button) {
 	_log('go', city, w_button)
@@ -73,29 +124,4 @@ $(function(){
 	return false
   })
 
-  _log('data', data)
-  var data_cars = _(data.cars).values()
-
-  _(data_cars).each(function(each){
-	_(each).extend({
-	  act: _('<button class="btn btn-primary btn-sm act" data-car="%s">Select</button>').sprintf(each.id)
-	})
-  })
-
-  w_dt.dataTable({
-    // paging: false,
-    // filter: false,
-    // info: false,
-    columns: [
-	  { title: 'Owner', data: 'owner' },
-	  { title: 'Make', data: 'make' },
-	  { title: 'Model', data: 'model' },
-	  { title: 'Engine', data: 'engine' },
-	  { title: 'Year', data: 'year' },
-	  { title: 'Plate', data: 'plate' },
-	  { title: 'Select', data: 'act', sortable: false },
-	],
-	data: data_cars
-  })
-  var api = w_dt.api()
 })
