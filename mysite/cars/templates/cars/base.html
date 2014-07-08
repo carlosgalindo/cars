@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta name="description" content="Cars DEMO">
+  <meta name="author" content="Carlos Galindo">
+  <!-- <link rel="shortcut icon" href=""> -->
+  <title> Cars DEMO </title>
+
+  <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="//cdn.datatables.net/1.10.0-rc.1/css/jquery.dataTables.css" rel="stylesheet" />
+  <link href="//cdn.datatables.net/plug-ins/f3e99a6c02/integration/bootstrap/3/dataTables.bootstrap.css" rel="stylesheet" />
+  <link href="/static/cars.css" rel="stylesheet" />
+  <script src="//cdnjs.cloudflare.com/ajax/libs/modernizr/2.7.1/modernizr.min.js"></script>
+</head>
+
+<body>
+  <div class="container">
+
+	<h1 class="text-center">Cars DEMO {% block goto %}{% endblock %} </h1>
+
+{% block content %}{% endblock %}
+
+  </div>
+</body>
+
+<script>
+  data = {{ data|safe }}
+</script>
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/underscore.string/2.3.3/underscore.string.min.js"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script src="//cdn.datatables.net/1.10.0-rc.1/js/jquery.dataTables.js"></script>
+<script src="//cdn.datatables.net/plug-ins/f3e99a6c02/integration/bootstrap/3/dataTables.bootstrap.js"></script>
+<script src="/static/cars.js"></script>
+
+</html>

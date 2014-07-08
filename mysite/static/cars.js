@@ -1,5 +1,5 @@
 
-var js_debug = false
+var js_debug = true
 function _log() { if (js_debug) { console.log(arguments) } }
 
 $(function(){
@@ -12,10 +12,11 @@ $(function(){
 
   w_go.removeAttr('disabled') // fix for FF ... https://github.com/twbs/bootstrap/issues/793
 
-  $(document).on('click', '.refresh', function(){
-	var w_refresh = $(this)
-	var city = w_refresh.data('city')
-	go(city, w_refresh)
+  $(document).on('click', '.act', function(){
+	var w_act = $(this)
+	var car_id = w_act.data('car')
+	var car = data.cars[car_id]
+	_log('click', w_act, car_id, car)
   })
 
   $('#clear').click(function(){
@@ -72,16 +73,29 @@ $(function(){
 	return false
   })
 
+  _log('data', data)
+  var data_cars = _(data.cars).values()
+
+  _(data_cars).each(function(each){
+	_(each).extend({
+	  act: _('<button class="btn btn-primary btn-sm act" data-car="%s">Select</button>').sprintf(each.id)
+	})
+  })
+
   w_dt.dataTable({
     // paging: false,
     // filter: false,
     // info: false,
     columns: [
-	  { title: 'City Entered', data: 'city' },
-	  { title: 'City Found', data: 'city_found' },
-	  { title: 'Temperature @ Celcius', data: 'temperature' },
-	  { title: 'Refresh', data: 'refresh', sortable: false },
-	]
+	  { title: 'Owner', data: 'owner' },
+	  { title: 'Make', data: 'make' },
+	  { title: 'Model', data: 'model' },
+	  { title: 'Engine', data: 'engine' },
+	  { title: 'Year', data: 'year' },
+	  { title: 'Plate', data: 'plate' },
+	  { title: 'Select', data: 'act', sortable: false },
+	],
+	data: data_cars
   })
   var api = w_dt.api()
 })
