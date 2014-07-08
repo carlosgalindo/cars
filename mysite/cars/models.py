@@ -58,6 +58,8 @@ class Car(models.Model):
     def model_(self): return self.model.name
     def engine_(self): return self.model.engine.name
 
+    def test_value(self): return True
+
 class Service(models.Model):
     car = models.ForeignKey(Car, verbose_name='Car')
     odometer = models.PositiveIntegerField('Odometer', default=0, validators=[MaxValueValidator(300000)])
