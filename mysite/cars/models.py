@@ -1,9 +1,9 @@
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 
-def _name(): return models.CharField('Name', max_length=200, unique=True)
-def _datetime(): return models.DateTimeField(blank=True, null=True)
-def _text(): return models.TextField(blank=True)
+def _name(**kwargs): return models.CharField('Name', max_length=200, unique=True, **kwargs)
+def _datetime(*args, **kwargs): return models.DateTimeField(blank=True, null=True, *args, **kwargs)
+def _text(**kwargs): return models.TextField('Observations', blank=True, **kwargs)
 
 class Owner(models.Model):
     name = _name()
@@ -25,15 +25,15 @@ class Make(models.Model):
 
 class Model(models.Model):
     name = _name()
-    make = models.ForeignKey(Make)
-    engine = models.ForeignKey(Engine)
+    make = models.ForeignKey(Make, verbose_name='Make')
+    engine = models.ForeignKey(Engine, verbose_name='Engine')
 
     def __unicode__(self):
         return ', '.join(map(unicode, [ self.make, self.name, self.engine ]))
 
 class Task(models.Model):
     name = _name()
-    engines = models.ManyToManyField(Engine)
+    engines = models.ManyToManyField(Engine, verbose_name='Engines')
 
     def __unicode__(self):
         return self.name
@@ -41,10 +41,10 @@ class Task(models.Model):
     def engines_(self): return ', '.join(sorted([ engine.name for engine in self.engines.all() ]))
 
 class Car(models.Model):
-    owner = models.ForeignKey(Owner)
-    model = models.ForeignKey(Model)
-    year = models.PositiveIntegerField(validators=[MinValueValidator(2000), MaxValueValidator(2015)])
-    plate = models.CharField(max_length=8, blank=True)
+    owner = models.ForeignKey(Owner, verbose_name='Owner')
+    model = models.ForeignKey(Model, verbose_name='Model')
+    year = models.PositiveIntegerField('Year', validators=[MinValueValidator(2000), MaxValueValidator(2015)])
+    plate = models.CharField('Plate', max_length=8, blank=True)
 
     def __unicode__(self):
         return ', '.join([ unicode(each) for each in [
@@ -59,13 +59,13 @@ class Car(models.Model):
     def engine_(self): return self.model.engine.name
 
 class Service(models.Model):
-    car = models.ForeignKey(Car)
-    odometer = models.PositiveIntegerField(default=0, validators=[MaxValueValidator(300000)])
-    sched = _datetime()
-    enter = _datetime()
-    exit = _datetime()
+    car = models.ForeignKey(Car, verbose_name='Car')
+    odometer = models.PositiveIntegerField('Odometer', default=0, validators=[MaxValueValidator(300000)])
+    sched = _datetime('Schedule')
+    enter = _datetime('Enter / Arrival')
+    exit = _datetime('Exit / Departure')
+    total = models.DecimalField('Total', default=0, max_digits=7, decimal_places=2)
     observations = _text()
-    total = models.DecimalField(default=0, max_digits=7, decimal_places=2)
 
     def __unicode__(self):
         return '%s ; odometer: %s' % (self.car, self.odometer)
@@ -82,10 +82,10 @@ class Service(models.Model):
     def tasks_(self): return ', '.join(sorted([ each.task.name for each in self.servicetask_set.all() ]))
 
 class ServiceTask(models.Model):
-    service = models.ForeignKey(Service)
-    task = models.ForeignKey(Task)
-    start = _datetime()
-    end = _datetime()
+    service = models.ForeignKey(Service, verbose_name='Service')
+    task = models.ForeignKey(Task, verbose_name='Task')
+    start = _datetime('Start')
+    end = _datetime('End')
     observations = _text()
 
     def __unicode__(self):

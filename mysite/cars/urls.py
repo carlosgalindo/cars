@@ -9,6 +9,10 @@ for er, eset in [
     (r'makes', views.MakeViewSet),
     (r'models', views.ModelViewSet),
     (r'engines', views.EngineViewSet),
+    (r'tasks', views.TaskViewSet),
+    (r'cars', views.CarViewSet),
+    (r'services', views.ServiceViewSet),
+    (r'servicetasks', views.ServiceTaskViewSet),
 ]:
     router.register(er, eset)
 

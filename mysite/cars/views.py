@@ -23,6 +23,22 @@ class EngineViewSet(viewsets.ModelViewSet):
     queryset = Engine.objects.all()
     serializer_class = EngineSerializer
 
+class TaskViewSet(viewsets.ModelViewSet):
+    queryset = Task.objects.all()
+    serializer_class = TaskSerializer
+
+class CarViewSet(viewsets.ModelViewSet):
+    queryset = Car.objects.all()
+    serializer_class = CarSerializer
+
+class ServiceViewSet(viewsets.ModelViewSet):
+    queryset = Service.objects.all()
+    serializer_class = ServiceSerializer
+
+class ServiceTaskViewSet(viewsets.ModelViewSet):
+    queryset = ServiceTask.objects.all()
+    serializer_class = ServiceTaskSerializer
+
 def index(request):
     return render(request, 'cars/index.html', dict(data={}))
 
