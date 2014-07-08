@@ -4,6 +4,25 @@ from django.http import HttpResponse
 from cars.models import *
 import json
 
+from rest_framework import viewsets
+from cars.serializers import *
+
+class OwnerViewSet(viewsets.ModelViewSet):
+    queryset = Owner.objects.all()
+    serializer_class = OwnerSerializer
+
+class MakeViewSet(viewsets.ModelViewSet):
+    queryset = Make.objects.all()
+    serializer_class = MakeSerializer
+
+class ModelViewSet(viewsets.ModelViewSet):
+    queryset = Model.objects.all()
+    serializer_class = ModelSerializer
+
+class EngineViewSet(viewsets.ModelViewSet):
+    queryset = Engine.objects.all()
+    serializer_class = EngineSerializer
+
 def index(request):
     return render(request, 'cars/index.html', dict(data={}))
 

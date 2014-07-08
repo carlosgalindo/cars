@@ -16,7 +16,10 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     'django_extensions',
+    'rest_framework',
+
     'cars',
 )
 
@@ -59,3 +62,7 @@ TEMPLATE_DIRS = (
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'static'),
 )
+
+REST_FRAMEWORK = {
+    # 'PAGINATE_BY': 10
+}
