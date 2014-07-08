@@ -44,7 +44,7 @@ Icon
 *.wpu
 
 # Tmp database.
-db.sqlite3
+# db.sqlite3
 
 # Vagrant.
 .vagrant
