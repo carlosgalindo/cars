@@ -41,7 +41,7 @@ def setup():
             model = models[iowner]
             engine = model.engine
             car = _new(Car, owner=owners[iowner], model=model, year=2015-iowner, plate=str(iowner + 1) * 6)
-            service = _new(Service, car=car, mileage=(iowner + 1) * 10000, total=24.31)
+            service = _new(Service, car=car, odometer=(iowner + 1) * 10000, total=24.31)
             tasks = engine.task_set.all() # only compatible ones.
             servicetasks = [ _new(ServiceTask, service=service, task=task) for task in tasks ]
 

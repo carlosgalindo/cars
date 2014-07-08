@@ -19,7 +19,7 @@ class CarAdmin(admin.ModelAdmin):
     list_display = ('owner', 'make_', 'model_', 'engine_', 'year', 'plate')
 
 class ServiceAdmin(admin.ModelAdmin):
-    list_display = ('owner_', 'make_', 'model_', 'engine_', 'year_', 'plate_', 'mileage', 'sched_', 'enter_', 'exit_', 'total')
+    list_display = ('owner_', 'make_', 'model_', 'engine_', 'year_', 'plate_', 'odometer', 'sched_', 'enter_', 'exit_', 'tasks_', 'total')
 
 class ServiceTaskAdmin(admin.ModelAdmin):
     list_display = ('owner_', 'make_', 'model_', 'year_', 'engine_', 'start_', 'end_')
