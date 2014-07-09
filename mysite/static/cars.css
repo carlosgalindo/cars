@@ -7,3 +7,6 @@ h1 { margin-bottom: 20px; }
 #service-form .tab-content { padding-top: 20px; }
 
 X.input-group-addon { width: 120px; }
+
+._jsonform-array-deleteitem { display: none; }
+

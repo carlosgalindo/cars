@@ -1,5 +1,5 @@
 
-var js_debug = true
+var js_debug = false
 function _log() { if (js_debug) { console.log(arguments) } }
 
 $(function(){
@@ -29,9 +29,13 @@ $(function(){
 	  return _v
 	}
 	var vjson = {}
-	if (z.owner) {
+	var refvars = {}
+	var title = 'Create Owner & Car & Service'
+	if (z.owner_id) {
+	  title = 'Create Car & Service for Owner'
+	  refvars.ref_owner = z.owner_id
 	  _(vjson).extend({
-		car_owner: z.owner,
+		car_owner: z.owner_id,
 	  })
 	}
 	if (z.sched) {
@@ -41,12 +45,16 @@ $(function(){
 	}
 	var tasks = data.tasks
 	if (car) {
+	  if (!service) {
+		title = 'Create Service for Car'
+		refvars.ref_car = car.id
+	  }
 	  _(vjson).extend({
 		car: car.id,
-		car_owner: car.owner,
-		car_model: car.model,
-		car_year: car.year,
-		car_plate: car.plate,
+		// car_owner: car.owner,
+		// car_model: car.model,
+		// car_year: car.year,
+		// car_plate: car.plate,
 	  })
 	  var engine = data.models[car.model].engine
 	  tasks = _(tasks).clone()
@@ -59,9 +67,14 @@ $(function(){
 	  // _log('tasks', engine, tasks)
 	}
 	else {
+	  _(vjson).defaults({
+		car_year: 2014,
+	  })
 	  // pending to filter engine-compatible tasks based on the user-selected model.
 	}
 	if (service) {
+	  title = 'Edit Service'
+	  refvars.ref_service = service.id
 	  _(vjson).extend({
 		service: service.id,
 		sched: service.sched,
@@ -70,6 +83,12 @@ $(function(){
 		odometer: service.odometer,
 		total: service.total,
 		observations: service.observations,
+		servicetasks: _(service.servicetasks).values(),
+	  })
+	}
+	else {
+	  _(vjson).defaults({
+		sched: $.fullCalendar.formatDate(new Date(), 'yyyy-MM-dd HH:mm'),
 	  })
 	}
 	_log('modal', z, vjson)
@@ -78,9 +97,9 @@ $(function(){
 		service: { type: 'string', required: true, "enum": _ids(data.services) },
 		car: { type: 'string', required: true, "enum": _ids(data.cars) },
 		car_owner: { type: 'string', required: true, "enum": _ids(data.owners) },
-		car_owner_name: { type: 'string' },
+		car_owner_name: { type: 'string', required: true },
 		car_model: { type: 'string', required: true, "enum": _ids(data.models) },
-		car_year: { type: 'string' },
+		car_year: { type: 'string', required: true },
 		car_plate: { type: 'string' },
 		sched: { type: 'string' },
 		enter: { type: 'string' },
@@ -88,12 +107,13 @@ $(function(){
 		odometer: { type: 'integer' },
 		total: { type: 'number' },
 		observations: { type: 'string' },
-		tasks: {
+		servicetasks: {
 		  type: 'array',
 		  items: {
 			type: 'object',
 			title: 'Task',
 			properties: {
+			  id: { type: 'string' },
 			  task: { type: 'string', required: true, "enum": _ids(tasks) },
 			  start: { type: 'string' },
 			  end: { type: 'string' },
@@ -105,14 +125,14 @@ $(function(){
 	  form: [
 		service ? { key: 'service', titleMap: _obj(data.services), prepend: 'Service', notitle: true, disabled: true } : {},
 		car && !service ? { key: 'car', titleMap: _obj(data.cars), prepend: 'Car', notitle: true, disabled: true } : {},
-		z.owner ? { key: 'car_owner', titleMap: _obj(data.owners), prepend: 'Owner', notitle: true, disabled: true } : {},
-		vjson.car_owner ? {} : { key: 'car_owner_name', prepend: 'Owner', notitle: true },
+		z.owner_id ? { key: 'car_owner', titleMap: _obj(data.owners), prepend: 'Owner', notitle: true, disabled: true } : {},
+		car || z.owner_id ? {} : { key: 'car_owner_name', prepend: 'Owner', notitle: true },
 		car ? {} : { key: 'car_model', titleMap: _obj(data.models), prepend: 'Model', notitle: true },
 		car ? {} : { key: 'car_year', prepend: 'Year', notitle: true },
 		car ? {} : { key: 'car_plate', prepend: 'Plate', notitle: true },
-		{ key: 'sched', type: 'datetime-local', prepend: 'Schedule', notitle: true },
-		{ key: 'enter', type: 'datetime-local', prepend: 'Enter', notitle: true },
-		{ key: 'exit', type: 'datetime-local', prepend: 'Exit', notitle: true },
+		{ key: 'sched', prepend: 'Schedule', notitle: true },
+		{ key: 'enter', prepend: 'Enter', notitle: true },
+		{ key: 'exit', prepend: 'Exit', notitle: true },
 		{ key: 'odometer', prepend: 'Odometer', notitle: true },
 		{ key: 'total', prepend: 'Total', notitle: true },
 		{ key: 'observations', prepend: 'Observations', notitle: true },
@@ -121,12 +141,13 @@ $(function(){
 		  items: [
 			{
 			  type: 'section',
-			  legend: '{{idx}}. {{value}}',
+			  legend: '{{idx}}',
 			  items: [
-				{ key: 'tasks[].task', titleMap: _obj(tasks), prepend: 'Task', notitle: true },
-				{ key: 'tasks[].start', prepend: 'Start', notitle: true },
-				{ key: 'tasks[].end', prepend: 'End', notitle: true },
-				{ key: 'tasks[].observations', prepend: 'Observations', notitle: true },
+				{ key: 'servicetasks[].id', prepend: 'Ref', notitle: true, readonly: true },
+				{ key: 'servicetasks[].task', titleMap: _obj(tasks), prepend: 'Task', notitle: true },
+				{ key: 'servicetasks[].start', prepend: 'Start', notitle: true },
+				{ key: 'servicetasks[].end', prepend: 'End', notitle: true },
+				{ key: 'servicetasks[].observations', prepend: 'Observations', notitle: true },
 			  ],
 			},
 		  ],
@@ -136,55 +157,60 @@ $(function(){
 	  ],
 	  value: vjson,
 	  onSubmitValid: function(vals){ // https://github.com/joshfire/jsonform/wiki#wiki-submission-values
-		var vars = _({}).extend(vjson, vals)
-		_log('onSubmitValid', vars)
+		var postvars = _({}).extend(refvars, vals)
+		_log('onSubmitValid', postvars)
 		$.ajax({
 		  url: '/cars/ajax',
-		  data: vars,
+		  data: { data: JSON.stringify(postvars) },
 		  type: 'post',
 		  dataType: 'json',
 		  complete: function(xhr, text_status){
-			_log('ajax COMPLETE', text_status, xhr)
-			data = xhr.responseJSON
-			if (data && data.error) { return alert(data.error) } // regardless of status.
+			var data2 = xhr.responseJSON
+			_log('ajax COMPLETE', text_status, data2)
+			if (data2 && data2.error) { return alert(data2.error) } // regardless of status.
 			if (xhr.status != 200) {
 			  _log('ajax ERROR', xhr)
 			  return alert('Error communicating to the server, please try again. If the error persists, please contact x@x.com.')
 			}
-			if (!data) { return alert('Ajax success, but NO data returned, please try again.') }
-			alert('PENDING')
+			if (!data2) { return alert('Ajax success, but NO data returned, please try again.') }
+			_(data2.data).each(function(each, k){
+			  _(data[k]).extend(each)
+			})
+			data_set()
+			w_modal.modal('hide')
 		  }
 		})
 	  },
 	})
 	w_form.find('.tabbable:last').before('<label class="control-label">Tasks</label>')
+	w_modal.find('#service-label').text(title)
 	w_modal.modal('show')
   }
 
   function service_edit(service_id) {
 	var service = data.services[service_id]
-	_log('service_edit', service_id, service)
+	// _log('service_edit', service_id, service)
 	modal({ service: service })
   }
 
   $(document).on('click', '.service-owner-car-create', function(){
 	var w_act = $(this)
-	_log('click @ service-owner-car-create', w_act)
+	// _log('click @ service-owner-car-create', w_act)
 	modal()
   })
 
   $(document).on('click', '.service-car-create', function(){
 	var w_act = $(this)
 	var owner_id = w_act.data('ref')
-	_log('click @ service-car-create', w_act, owner_id)
-	modal({ owner: owner_id })
+	// _log('click @ service-car-create', w_act, owner_id)
+	modal({ owner_id: owner_id })
   })
 
   $(document).on('click', '.service-create', function(){
 	var w_act = $(this)
 	var car_id = w_act.data('ref')
 	var car = data.cars[car_id]
-	_log('click @ service-create', w_act, car_id, car)
+	// _log('click @ service-create', w_act, car_id, car)
 	modal({ car: car })
   })
 
@@ -195,36 +221,11 @@ $(function(){
 	service_edit(service_id)
   })
 
-  _log('data', data)
-  var data_cars = _(data.cars).values()
-
-  _(data.services).each(function(service, id){
-	service['datetime'] = service.start || service.sched
-  })
-
-  // var events = [ { allDay: true, start: '2014-07-09', end: '2014-07-10', title: 'My EVENT' } ]
-  var events = _(_(data.services)).collect(function(service, id){
-	return { id: service.id, allDay: false, start: service.datetime, end: service.end, title: service.car_name }
-  })
-
   function _button(cls_button, cls_service, ref, label) {
 	return _('<p><button class="btn btn-%s btn-sm %s" data-ref="%s">%s</button></p>').sprintf(cls_button, cls_service, ref, label)
   }
+
   $('#create-full').html(_button('default center-block', 'service-owner-car-create', '', '+ Owner & Car & Service'))
-  _(data_cars).each(function(car){
-	_(car).extend({
-	  acts: (_([
-		_button('default', 'service-create', car.id, '+ Service'),
- 		_(_(_(car.services).collect(function(id){ return data.services[id] })).sortBy('datetime')).collect(function(service) {
-		  return _button('primary', 'service-edit', service.id, service.datetime || '?')
-		})
-	  ]).flatten()).join(' '),
-	  owner_info: [
-		_('<p> %s </p>').sprintf(car.owner_name),
-		_button('default', 'service-car-create', car.owner, '+ Car & Service')
-	  ].join(' '),
-	})
-  })
 
   w_dt.dataTable({
     // paging: false,
@@ -239,7 +240,7 @@ $(function(){
 	  { title: 'Year', data: 'year' },
 	  { title: 'Plate', data: 'plate' },
 	],
-	data: data_cars,
+	data: [],
   })
   var api = w_dt.api()
 
@@ -256,7 +257,7 @@ $(function(){
 	  modal({ sched: start })
 	},
 	dayClick: null, // otherwise it will trigger "select" again.
-	editable: true, // draggable & resizable events.
+	// editable: true, // draggable & resizable events.
 	eventDrop: function(calev, dayDelta, minuteDelta, allDay, revertFunc, ev, ui, view) { // http://arshaw.com/fullcalendar/docs/event_ui/eventDrop/
 	  _log('cal.eventDrop')
 	},
@@ -267,6 +268,45 @@ $(function(){
 	  _log('cal.eventClick')
 	  service_edit(calev.id)
 	},
-	events: events,
+	events: [],
   })
+
+  function data_set() {
+	_log('data_set', data)
+	var data_cars = _(data.cars).values()
+
+	_(data.services).each(function(service, id){
+	  service['datetime'] = service.start || service.sched
+	})
+
+	var events = _(_(data.services)).collect(function(service, id){
+	  return { id: service.id, allDay: false, start: service.datetime, end: service.end, title: service.car_name }
+	})
+
+	_(data_cars).each(function(car){
+	  _(car).extend({
+		acts: (_([
+		  _button('default', 'service-create', car.id, '+ Service'),
+		  _(_(_(car.services).collect(function(id){ return data.services[id] })).sortBy('datetime')).collect(function(service) {
+			return _button('primary', 'service-edit', service.id, service.datetime || '?')
+		  })
+		]).flatten()).join(' '),
+		owner_info: [
+		  _('<p> %s </p>').sprintf(car.owner_name),
+		  _button('default', 'service-car-create', car.owner, '+ Car & Service')
+		].join(' '),
+	  })
+	})
+
+	api.clear()
+	api.rows.add(data_cars)
+	api.draw()
+
+	w_cal
+	  .fullCalendar('removeEvents')
+	  .fullCalendar('addEventSource', events)
+	  .fullCalendar('refetchEvents')
+  }
+
+  data_set()
 })

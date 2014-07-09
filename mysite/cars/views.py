@@ -1,5 +1,8 @@
 from django.shortcuts import render
 from django.http import HttpResponse
+from django.db import IntegrityError, transaction
+
+from decimal import Decimal
 
 from cars.models import *
 import json
@@ -46,38 +49,22 @@ def setup(request):
     import setup_db
     return HttpResponse(setup_db.setup())
 
-def schedule(request):
-
+def _data(config=None):
+    # print '_data', config
     def _all(dbmodel):
         return dbmodel.objects.all()
-
+    def _list(dbmodel):
+        return [ config.get(dbmodel) ] if config else _all(dbmodel)
     def _datetime(datetime):
         return str(datetime) if datetime else ''
-
     def _dict(data, fn):
         return dict([ (each.id, dict(id=each.id, full=str(each), **fn(each)))
             for each in data ])
-
     data = dict(
-        owners = _dict(_all(Owner), lambda owner: dict(
+        owners = _dict(_list(Owner), lambda owner: dict(
             name = owner.name,
         )),
-        tasks = _dict(_all(Task), lambda task: dict(
-            name = task.name,
-            engines = [ engine.id for engine in task.engines.all() ],
-        )),
-        makes = _dict(_all(Make), lambda make: dict(
-            name = make.name,
-            models = _dict(make.model_set.all(), lambda model: dict(
-                name = model.name,
-            )),
-        )),
-        models = _dict(_all(Model), lambda model: dict(
-            name = model.name,
-            engine = model.engine.id,
-            engine_name = model.engine.name,
-        )),
-        cars = _dict(_all(Car), lambda car: dict(
+        cars = _dict(_list(Car), lambda car: dict(
             owner = car.owner.id,
             owner_name = car.owner.name,
             make = car.model.make.id,
@@ -90,7 +77,7 @@ def schedule(request):
             plate = car.plate,
             services = [ each.id for each in car.service_set.all() ],
         )),
-        services = _dict(_all(Service), lambda service: dict(
+        services = _dict(_list(Service), lambda service: dict(
             car = service.car.id,
             car_name = str(service.car),
             odometer = service.odometer,
@@ -102,14 +89,121 @@ def schedule(request):
             servicetasks = _dict(service.servicetask_set.all(), lambda servicetask: dict(
                 task = servicetask.task.id,
                 task_name = servicetask.task.name,
+                start = _datetime(servicetask.start),
+                end = _datetime(servicetask.end),
+                observations = servicetask.observations,
             )),
         )),
     )
+    if not config:
+        data.update(
+            tasks = _dict(_all(Task), lambda task: dict(
+                name = task.name,
+                engines = [ engine.id for engine in task.engines.all() ],
+            )),
+            models = _dict(_all(Model), lambda model: dict(
+                name = model.name,
+                engine = model.engine.id,
+                engine_name = model.engine.name,
+            )),
+        )
+    # print '_data', data
+    return data
 
-    # print 'data', data
+def schedule(request):
+    data = _data()
     return render(request, 'cars/schedule.html', dict(schedule=True, data=json.dumps(data)))
 
 def ajax(request):
-    print 'ajax', request.POST
-    return HttpResponse({})
-
+    pvars = json.loads(request.POST.get('data'), parse_float=Decimal)
+    # print 'ajax', pvars
+    def _get(key, default=None):
+        pv = pvars.get(key)
+        # print '_get', key, pv
+        return pv or ('' if default is None else default)
+    def _ref(key, dbmodel):
+        pv = _get(key)
+        pv = dbmodel.objects.get(pk=pv) if pv else None
+        # print 'ajax > _ref', key, dbmodel, pv.id if pv else None, pv
+        return pv
+    def _get_datetime(key):
+        return _get(key) or None
+    def _new(dbmodel, **kwargs):
+        return dbmodel.objects.create(**kwargs)
+    def _int(string):
+        try: v = int(string)
+        except: v = None
+        return v
+    def _decimal(string):
+        try: v = Decimal(string)
+        except: v = None
+        return v
+    service = _ref('ref_service', Service)
+    car = _ref('ref_car', Car)
+    owner = _ref('ref_owner', Owner)
+    # print 'ajax > refs', [ service, car, owner ]
+    errors = []
+    try:
+        with transaction.atomic():
+            if service:
+                car = service.car
+            if car:
+                owner = car.owner
+            else:
+                if not owner:
+                    owner = _new(Owner, name=_get('car_owner_name'))
+                model = _ref('car_model', Model)
+                car = _new(Car,
+                    owner = owner,
+                    model = model,
+                    year = _int(_get('car_year')) or 2000,
+                    plate = _get('car_plate'),
+                )
+            if not service:
+                dbvars = dict(
+                    car = car,
+                    odometer = _int(_get('odometer')) or 0,
+                    sched = _get_datetime('sched'),
+                    enter = _get_datetime('enter'),
+                    exit = _get_datetime('exit'),
+                    total = _decimal(_get('total')) or 0,
+                    observations = _get('observations'),
+                )
+                service = _new(Service, **dbvars)
+            # print 'car', car
+            # print 'service', service
+            webtasks = pvars.get('servicetasks') or []
+            # print 'webtasks', webtasks
+            for webtask in webtasks:
+                pvars = webtask # reset to reuse _get methods above.
+                servicetask_id = _int(webtask.get('id'))
+                # print 'servicetask_id', servicetask_id
+                task_id = _int(webtask.get('task'))
+                task = Task.objects.get(pk=task_id) if task_id else None
+                # print 'task', task
+                if task:
+                    dbvars = dict(
+                        start = _get_datetime('start'),
+                        end = _get_datetime('end'),
+                        observations = _get('observations'),
+                    )
+                    # print 'dbvars', dbvars
+                    if servicetask_id: # update.
+                        # filter (instead of get) to use update.
+                        ServiceTask.objects.filter(pk=servicetask_id).update(**dbvars)
+                    else: # create.
+                        _new(ServiceTask,
+                            service = service,
+                            task = task,
+                            **dbvars
+                        )
+            # NO deletes for now.
+    except IntegrityError as e:
+        errors.append('Not unique / valid.')
+        # raise(e)
+    data = dict(
+        error = ', '.join(errors),
+        data = dict() if errors else _data({ Owner: owner, Car: car, Service: service }),
+    )
+    # print 'ajax > data', data
+    return HttpResponse(json.dumps(data))
