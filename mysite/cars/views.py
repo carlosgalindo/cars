@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.db import IntegrityError, transaction
+from django.core.exceptions import ValidationError
 
 from decimal import Decimal
 
@@ -200,6 +201,9 @@ def ajax(request):
             # NO deletes for now.
     except IntegrityError as e:
         errors.append('Not unique / valid.')
+        # raise(e)
+    except ValidationError as e:
+        errors.append('Validation error.')
         # raise(e)
     data = dict(
         error = ', '.join(errors),
