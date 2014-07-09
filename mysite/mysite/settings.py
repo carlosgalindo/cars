@@ -26,7 +26,7 @@ INSTALLED_APPS = (
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware', # tmp for cars.ajax.
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -37,7 +37,8 @@ ROOT_URLCONF = 'mysite.urls'
 WSGI_APPLICATION = 'mysite.wsgi.application'
 
 db_path = os.path.join(BASE_DIR, '..', '..', 'cars_db', 'db.sqlite3')
-print 'db_path', db_path
+# print 'db_path', db_path
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',

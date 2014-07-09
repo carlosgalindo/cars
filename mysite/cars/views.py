@@ -55,15 +55,27 @@ def schedule(request):
         return str(datetime) if datetime else ''
 
     def _dict(data, fn):
-        return dict([ (each.id, dict(id=each.id, **fn(each)))
+        return dict([ (each.id, dict(id=each.id, full=str(each), **fn(each)))
             for each in data ])
 
     data = dict(
+        owners = _dict(_all(Owner), lambda owner: dict(
+            name = owner.name,
+        )),
+        tasks = _dict(_all(Task), lambda task: dict(
+            name = task.name,
+            engines = [ engine.id for engine in task.engines.all() ],
+        )),
         makes = _dict(_all(Make), lambda make: dict(
             name = make.name,
             models = _dict(make.model_set.all(), lambda model: dict(
                 name = model.name,
             )),
+        )),
+        models = _dict(_all(Model), lambda model: dict(
+            name = model.name,
+            engine = model.engine.id,
+            engine_name = model.engine.name,
         )),
         cars = _dict(_all(Car), lambda car: dict(
             owner = car.owner.id,
@@ -96,3 +108,8 @@ def schedule(request):
 
     # print 'data', data
     return render(request, 'cars/schedule.html', dict(schedule=True, data=json.dumps(data)))
+
+def ajax(request):
+    print 'ajax', request.POST
+    return HttpResponse({})
+
