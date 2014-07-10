@@ -8,6 +8,8 @@ from decimal import Decimal
 from cars.models import *
 import json
 
+import utils
+
 from rest_framework import viewsets
 from cars.serializers import *
 
@@ -193,17 +195,21 @@ def ajax(request):
                         # filter (instead of get) to use update.
                         ServiceTask.objects.filter(pk=servicetask_id).update(**dbvars)
                     else: # create.
-                        _new(ServiceTask,
+                        dbvars.update(
                             service = service,
                             task = task,
-                            **dbvars
                         )
+                        err = utils.validate_engine(dbvars)
+                        if err:
+                            raise ValidationError(err)
+                        _new(ServiceTask, **dbvars)
             # NO deletes for now.
     except IntegrityError as e:
         errors.append('Not unique / valid.')
         # raise(e)
     except ValidationError as e:
-        errors.append('Validation error.')
+        # print 'ValidationError @ views.py', e
+        errors.append('Validation error: %s' % e)
         # raise(e)
     data = dict(
         error = ', '.join(errors),

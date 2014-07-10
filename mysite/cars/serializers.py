@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from cars.models import *
 
+import utils
+
 class OwnerSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Owner
@@ -40,3 +42,10 @@ class ServiceTaskSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = ServiceTask
         fields = ('url', 'id', 'service', 'task', 'start', 'end', 'observations')
+
+    def validate(self, data):
+        # print 'validate @ ServiceTaskSerializer @ serializers.py', data
+        error = utils.validate_engine(data)
+        if error:
+            raise serializers.ValidationError(error)
+        return data
