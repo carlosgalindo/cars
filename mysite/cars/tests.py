@@ -11,12 +11,11 @@ class ServiceTaskMethodTests(TestCase):
         def _new(dbmodel, **kwargs):
             return dbmodel.objects.create(**kwargs)
         def _new_name(dbmodel, **kwargs):
-            return dbmodel.objects.create(name='Any', **kwargs)
+            return _new(dbmodel, name='Any', **kwargs)
         engine = _new_name(Engine)
         model = _new_name(Model, make=_new_name(Make), engine=engine)
         service = _new(Service, car=_new(Car, year=2000, owner=_new(Owner), model=model))
         task = _new_name(Task)
-        task.save() # in order to be able to access its engines.
         if compatible:
             task.engines.add(engine)
         data = dict(service=service, task=task)
