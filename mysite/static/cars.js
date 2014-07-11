@@ -6,6 +6,7 @@ $(function(){
   _.mixin(_.str.exports()) /* underscore + string. */
 
   /* note that w_* properties & variables point to jquery widgets/elements. */
+  var w_doc = $(document)
   var w_dt = $('#dt')
   var w_cal = $('#cal')
   var w_modal = $('#service-modal')
@@ -192,20 +193,20 @@ $(function(){
 	modal({ service: service })
   }
 
-  $(document).on('click', '.service-owner-car-create', function(){
+  w_doc.on('click', '.service-owner-car-create', function(){
 	var w_act = $(this)
 	// _log('click @ service-owner-car-create', w_act)
 	modal()
   })
 
-  $(document).on('click', '.service-car-create', function(){
+  w_doc.on('click', '.service-car-create', function(){
 	var w_act = $(this)
 	var owner_id = w_act.data('ref')
 	// _log('click @ service-car-create', w_act, owner_id)
 	modal({ owner_id: owner_id })
   })
 
-  $(document).on('click', '.service-create', function(){
+  w_doc.on('click', '.service-create', function(){
 	var w_act = $(this)
 	var car_id = w_act.data('ref')
 	var car = data.cars[car_id]
@@ -213,7 +214,7 @@ $(function(){
 	modal({ car: car })
   })
 
-  $(document).on('click', '.service-edit', function(){
+  w_doc.on('click', '.service-edit', function(){
 	var w_act = $(this)
 	var service_id = w_act.data('ref')
 	// _log('click @ service-edit', w_act, service_id)
