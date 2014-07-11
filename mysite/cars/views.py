@@ -124,9 +124,11 @@ def ajax(request):
         pv = pvars.get(key)
         # print '_get', key, pv
         return pv or ('' if default is None else default)
+    def _dbget(dbmodel, dbid):
+        return dbmodel.objects.get(pk=dbid)
     def _ref(key, dbmodel):
         pv = _get(key)
-        pv = dbmodel.objects.get(pk=pv) if pv else None
+        pv = _dbget(dbmodel, pv) if pv else None
         # print 'ajax > _ref', key, dbmodel, pv.id if pv else None, pv
         return pv
     def _get_datetime(key):
@@ -148,6 +150,11 @@ def ajax(request):
     errors = []
     try:
         with transaction.atomic():
+            def _update(_obj, _dbvars):
+                # print '_update', _obj, _dbvars
+                for dbk, dbv in _dbvars.items():
+                    setattr(_obj, dbk, dbv)
+                _obj.save()
             if service:
                 car = service.car
             if car:
@@ -162,16 +169,19 @@ def ajax(request):
                     year = _int(_get('car_year')) or 2000,
                     plate = _get('car_plate'),
                 )
-            if not service:
-                dbvars = dict(
-                    car = car,
-                    odometer = _int(_get('odometer')) or 0,
-                    sched = _get_datetime('sched'),
-                    enter = _get_datetime('enter'),
-                    exit = _get_datetime('exit'),
-                    total = _decimal(_get('total')) or 0,
-                    observations = _get('observations'),
-                )
+            dbvars = dict(
+                car = car,
+                odometer = _int(_get('odometer')) or 0,
+                sched = _get_datetime('sched'),
+                enter = _get_datetime('enter'),
+                exit = _get_datetime('exit'),
+                total = _decimal(_get('total')) or 0,
+                observations = _get('observations'),
+            )
+            # print 'service dbvars', dbvars
+            if service:
+                _update(service, dbvars)
+            else:
                 service = _new(Service, **dbvars)
             # print 'car', car
             # print 'service', service
@@ -182,7 +192,7 @@ def ajax(request):
                 servicetask_id = _int(webtask.get('id'))
                 # print 'servicetask_id', servicetask_id
                 task_id = _int(webtask.get('task'))
-                task = Task.objects.get(pk=task_id) if task_id else None
+                task = _dbget(Task, task_id) if task_id else None
                 # print 'task', task
                 if task:
                     dbvars = dict(
@@ -190,10 +200,10 @@ def ajax(request):
                         end = _get_datetime('end'),
                         observations = _get('observations'),
                     )
-                    # print 'dbvars', dbvars
+                    # print 'servicetask dbvars', dbvars
                     if servicetask_id: # update.
-                        # filter (instead of get) to use update.
-                        ServiceTask.objects.filter(pk=servicetask_id).update(**dbvars)
+                        servicetask = _dbget(ServiceTask, servicetask_id)
+                        _update(servicetask, dbvars)
                     else: # create.
                         dbvars.update(
                             service = service,
@@ -205,11 +215,11 @@ def ajax(request):
                         _new(ServiceTask, **dbvars)
             # NO deletes for now.
     except IntegrityError as e:
-        errors.append('Not unique / valid.')
+        errors.append('Not unique, invalid.')
         # raise(e)
     except ValidationError as e:
         # print 'ValidationError @ views.py', e
-        errors.append('Validation error: %s' % e)
+        errors.append('Validation error:  %s' % '; '.join(e.messages))
         # raise(e)
     data = dict(
         error = ', '.join(errors),

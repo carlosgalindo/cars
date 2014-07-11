@@ -43,7 +43,7 @@ $(function(){
 		sched: $.fullCalendar.formatDate(z.sched, "yyyy-MM-dd HH:mm"),
 	  })
 	}
-	var tasks = data.tasks
+	var tasks = _(data.tasks).clone()
 	if (car) {
 	  if (!service) {
 		title = 'Create Service for Car'
@@ -57,7 +57,6 @@ $(function(){
 		// car_plate: car.plate,
 	  })
 	  var engine = data.models[car.model].engine
-	  tasks = _(tasks).clone()
 	  _(tasks).each(function(task, id){ // filter engine-compatible tasks.
 		if (!_(task.engines).include(engine)) {
 		  // _log('delete task', id)
@@ -152,7 +151,7 @@ $(function(){
 			},
 		  ],
 		},
-		{ type: 'submit', title: 'Save' },
+		{ type: 'submit', title: 'Save Service', htmlClass: 'btn-success center-block' },
 		// isnew ? '' : { type: 'button', title: 'Delete', id: 'service-delete', htmlClass: 'btn-danger btn-xs pull-right' }
 	  ],
 	  value: vjson,
